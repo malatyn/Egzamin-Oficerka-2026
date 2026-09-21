@@ -1,36 +1,55 @@
-const CACHE_NAME = "egzamin-oficerski-v2-20260911";
-const APP_SHELL = [
-  "./",
+const CACHE_NAME = "oficerka-pwa-2.0-20260921";
+const OFFLINE_FILES = [
   "./index.html",
   "./manifest.webmanifest",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png",
-  "./icons/apple-touch-icon.png"
+  "./icon-192.png",
+  "./icon-512.png",
+  "./apple-touch-icon.png"
 ];
 
 self.addEventListener("install", event => {
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)));
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(OFFLINE_FILES)));
   self.skipWaiting();
 });
 
 self.addEventListener("activate", event => {
-  event.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))))
-  );
-  self.clients.claim();
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)));
+    await self.clients.claim();
+  })());
 });
 
 self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
-  event.respondWith(
-    caches.match(event.request).then(cached => {
-      if (cached) return cached;
-      return fetch(event.request).then(response => {
-        if (!response || response.status !== 200 || response.type === "opaque") return response;
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
-        return response;
-      }).catch(() => caches.match("./index.html"));
-    })
-  );
+  const req = event.request;
+  const url = new URL(req.url);
+
+  // HTML/navigation: network first, so published updates arrive immediately.
+  if (req.mode === "navigate" || (url.origin === self.location.origin && url.pathname.endsWith("/index.html"))) {
+    event.respondWith((async () => {
+      try {
+        const fresh = await fetch(req, { cache: "no-store" });
+        const cache = await caches.open(CACHE_NAME);
+        cache.put("./index.html", fresh.clone());
+        return fresh;
+      } catch (_) {
+        return (await caches.match("./index.html")) || Response.error();
+      }
+    })());
+    return;
+  }
+
+  // Static assets: cache first; refresh in background when online.
+  event.respondWith((async () => {
+    const cached = await caches.match(req);
+    const network = fetch(req).then(async fresh => {
+      if (fresh && fresh.ok && url.origin === self.location.origin) {
+        const cache = await caches.open(CACHE_NAME);
+        cache.put(req, fresh.clone());
+      }
+      return fresh;
+    }).catch(() => null);
+    return cached || await network || Response.error();
+  })());
 });
