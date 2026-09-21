@@ -1,4 +1,4 @@
-const CACHE_NAME = "oficerka-pwa-2.0-20260921";
+const CACHE_NAME = "oficerka-pwa-2.1-20260921";
 const OFFLINE_FILES = [
   "./index.html",
   "./manifest.webmanifest",

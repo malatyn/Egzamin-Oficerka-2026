@@ -389,10 +389,27 @@
   @media (max-width:480px){
     .cat-btn{ min-width: 100%; }
   }
+
+  /* Oficerka 2.1 — mobile app shell */
+  @media (max-width:640px){
+    body{ padding-bottom:76px; }
+    header{ padding:9px 12px; }
+    .header-row{ flex-wrap:nowrap; }
+    #mobileMenuToggle{ min-width:44px; height:40px; font-size:0; padding:0; }
+    #mobileMenuToggle::before{ content:"⚙️"; font-size:20px; }
+    #mobileMenuToggle[aria-expanded="true"]::before{ content:"✕"; }
+    #topControls.open{ position:fixed; left:12px; right:12px; top:66px; width:auto; max-height:calc(100vh - 95px); overflow:auto; z-index:100; padding:12px; background:var(--panel); border:1px solid var(--border); border-radius:16px; box-shadow:0 16px 50px rgba(15,23,42,.22); }
+    #catNav{ display:flex !important; position:fixed; left:0; right:0; bottom:0; z-index:90; margin:0; padding:7px 8px calc(7px + env(safe-area-inset-bottom)); background:var(--panel); border-top:1px solid var(--border); box-shadow:0 -4px 20px rgba(15,23,42,.08); gap:5px; flex-wrap:nowrap; }
+    #catNav .cat-btn{ display:none; min-width:0; margin:0; border-radius:11px; padding:8px 4px; font-size:11px; line-height:1.2; }
+    #catNav .cat-btn[data-cat="bank"], #catNav .cat-btn[data-cat="exam"], #catNav .cat-btn[data-cat="orig"]{ display:block; flex:1; }
+    main{ padding:10px 8px 92px; }
+    .qcard{ border-radius:16px; }
+    .opt{ border-radius:14px; }
+  }
 </style>
 </head>
 <body data-theme="light">
-<div id="quickLookBanner" style="display:block; background:#fff3cd; color:#7a5b00; border-bottom:2px solid #e8a5a0; padding:12px 16px; font-size:13px; line-height:1.5; text-align:center;">
+<div id="quickLookBanner" style="display:none; background:#fff3cd; color:#7a5b00; border-bottom:2px solid #e8a5a0; padding:12px 16px; font-size:13px; line-height:1.5; text-align:center;">
   📱 <b>Widzisz tylko podgląd i przyciski nie działają?</b> To dlatego, że plik otworzył się w trybie „Szybki podgląd", a nie w pełnej przeglądarce.<br>
   <b>Napraw to:</b> 1) zainstaluj przeglądarkę <b>Firefox</b> ze sklepu App Store · 2) zapisz ten plik do folderu <b>Pobrane</b> Firefoksa na urządzeniu · 3) otwórz aplikację <b>Firefox</b> → zakładka <b>Pobrane</b> → kliknij plik, żeby go tam odtworzyć.
   <button onclick="document.getElementById('quickLookBanner').style.display='none'" style="margin-left:10px; padding:4px 10px; border-radius:6px; border:1px solid #7a5b00; background:transparent; color:#7a5b00; font-size:12px; cursor:pointer;">✕ Rozumiem, zamknij</button>
@@ -1058,16 +1075,16 @@
 
   // ============ CATEGORY NAV ============
   const CATS = [
-    {id:'orig', label:'📚 Testy oryginalne (A/B/C)'},
-    {id:'mirror', label:'🖥️ Testy z quizme.pl'},
     {id:'bank', label:'🗂️ Baza do nauki'},
     {id:'exam', label:'📝 Egzamin próbny'},
-    {id:'custom', label:'✍️ Dodaj pytania/testy'},
+    {id:'orig', label:'📚 Testy A/B/C'},
+    {id:'mirror', label:'🖥️ Quizme'},
+    {id:'custom', label:'✍️ Edycja bazy'},
   ];
   const catNav = document.getElementById('catNav');
   CATS.forEach(c=>{
     const b = document.createElement('button');
-    b.className = 'cat-btn' + (c.id==='orig' ? ' active':'');
+    b.className = 'cat-btn' + (c.id==='bank' ? ' active':'');
     b.textContent = c.label;
     b.dataset.cat = c.id;
     b.addEventListener('click', ()=>{
@@ -1087,7 +1104,7 @@
     document.querySelectorAll('.cat-btn').forEach(b=>b.classList.toggle('active', b.dataset.cat===catId));
     document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active', v.id==='view-'+catId));
   }
-  switchCat('orig');
+  switchCat('bank');
 
   // ============ ORIGINAL TESTS (A/B/C) ============
   (function initOrig(){
